@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0b1020">
+<title>NBA 賽程分析</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:22px;background:#0b1020;color:#eef3ff;font:16px system-ui,-apple-system,sans-serif}main{max-width:760px;margin:auto}h1{font-size:28px}section{background:#151f33;border:1px solid #30405d;border-radius:16px;padding:18px;margin:16px 0}button,input{font:inherit;border-radius:9px;padding:11px;border:1px solid #526581}button{background:#91b9ff;color:#10182a;font-weight:bold}input{background:#0b1020;color:white;max-width:100%}li{padding:12px 0;border-bottom:1px solid #30405d}.muted{color:#aab8d0;font-size:13px}
+</style>
+</head>
+<body><main>
+<h1>🏀 NBA 賽程分析</h1>
+<p class="muted">公開賽程與即時比分測試版</p>
+<section><label>比賽日期 <input id="d" type="date"></label> <button id="go">載入賽程</button><p id="s">準備連線…</p></section>
+<section><h2>賽程與比分</h2><ul id="games"><li>正在準備…</li></ul></section>
+<section><h2>分析提醒</h2><p>比分與賽程需由資料來源成功回傳才會顯示。此版本尚未包含傷兵、球隊近況或即時盤口分析，請勿將其視為投注保證。</p></section>
+<script>
+const $=id=>document.getElementById(id);
+const now=new Date();$('d').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+async function load(){ $('s').textContent='正在連線取得賽程…';$('games').innerHTML='';try{const date=$('d').value.replaceAll('-','');const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates='+date);if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();const events=j.events||[];if(!events.length){$('games').innerHTML='<li>這個日期沒有找到比賽，或資料來源沒有回傳賽事。</li>'}events.forEach(e=>{const c=e.competitions?.[0];const teams=c?.competitors||[];const a=teams.find(t=>t.homeAway==='away')||{};const h=teams.find(t=>t.homeAway==='home')||{};const li=document.createElement('li');li.innerHTML='<b>'+safe(a.team?.displayName)+' '+safe(a.score||'—')+' @ '+safe(h.team?.displayName)+' '+safe(h.score||'—')+'</b><br><span class="muted">'+safe(e.status?.type?.shortDetail||'狀態未提供')+'</span>'; $('games').appendChild(li)});$('s').textContent='載入完成：'+events.length+' 場；來源 ESPN 公開賽程。'}catch(e){$('s').textContent='連線失敗：'+e.message+'。可能是網路或資料來源限制，請稍後重試。';$('games').innerHTML='<li>目前無法取得賽程，尚未確認即時資料可用。</li>'}}
+$('go').addEventListener('click',load);load();
+</script></main></body></html>
