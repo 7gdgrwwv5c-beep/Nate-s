@@ -4,21 +4,52 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#0b1020">
-<title>NBA 賽程分析</title>
+<title>NBA 賽事分析室</title>
 <style>
-*{box-sizing:border-box}body{margin:0;padding:22px;background:#0b1020;color:#eef3ff;font:16px system-ui,-apple-system,sans-serif}main{max-width:760px;margin:auto}h1{font-size:28px}section{background:#151f33;border:1px solid #30405d;border-radius:16px;padding:18px;margin:16px 0}button,input{font:inherit;border-radius:9px;padding:11px;border:1px solid #526581}button{background:#91b9ff;color:#10182a;font-weight:bold}input{background:#0b1020;color:white;max-width:100%}li{padding:12px 0;border-bottom:1px solid #30405d}.muted{color:#aab8d0;font-size:13px}
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:18px;background:#0b1020;color:#eef3ff;font:16px/1.55 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:850px;margin:auto}h1{font-size:clamp(26px,5vw,36px);margin:8px 0}h2{font-size:21px;margin:0 0 12px}.muted{color:#aab8d0}.small{font-size:13px}.panel,.game{background:#151f33;border:1px solid #30405d;border-radius:18px;padding:18px;margin:15px 0}.controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}input,select,button{font:inherit;border-radius:10px;padding:11px;border:1px solid #526581}input,select{background:#0b1020;color:#fff;max-width:100%}button{background:#91b9ff;color:#10182a;font-weight:750;cursor:pointer}button.secondary{background:#25334d;color:#eef3ff}button:disabled{opacity:.6}#status{margin-bottom:0}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.gamehead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.teams{font-size:17px;font-weight:750}.tag{font-size:12px;color:#b9c9e5;border:1px solid #526581;border-radius:99px;padding:3px 8px;white-space:nowrap}.score{font-size:21px;font-weight:800;margin-top:7px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.metric{background:#0d1527;border:1px solid #30405d;border-radius:12px;padding:12px}.metric b{display:block;font-size:21px}.bar{height:9px;background:#26334c;border-radius:99px;overflow:hidden;margin:8px 0}.bar span{display:block;height:100%;background:#91b9ff}.analysis{border-top:1px solid #30405d;margin-top:14px;padding-top:14px}.hidden{display:none}.pill{padding:7px 10px;border-radius:99px;background:#25334d;color:#eef3ff;border:1px solid #526581}.pill.active{background:#91b9ff;color:#10182a}.footer{font-size:12px;color:#aab8d0;margin:20px 0 32px}@media(max-width:520px){body{padding:13px}.panel,.game{padding:14px}.grid{grid-template-columns:1fr}.gamehead{display:block}.tag{display:inline-block;margin-top:6px}}
 </style>
 </head>
 <body><main>
-<h1>🏀 NBA 賽程分析</h1>
-<p class="muted">公開賽程與即時比分測試版</p>
-<section><label>比賽日期 <input id="d" type="date"></label> <button id="go">載入賽程</button><p id="s">準備連線…</p></section>
-<section><h2>賽程與比分</h2><ul id="games"><li>正在準備…</li></ul></section>
-<section><h2>分析提醒</h2><p>比分與賽程需由資料來源成功回傳才會顯示。此版本尚未包含傷兵、球隊近況或即時盤口分析，請勿將其視為投注保證。</p></section>
+<h1>🏀 NBA 賽事分析室</h1>
+<p class="muted">賽程・比分・勝率模擬・大小分估算</p>
+<section class="panel">
+  <div class="controls"><label for="date">比賽日期 <input id="date" type="date"></label><button id="load">載入賽程</button></div>
+  <div class="toolbar"><button class="secondary" id="refresh">↻ 立即更新比分</button><label class="small"><input id="auto" type="checkbox" checked> 每 60 秒自動更新</label></div>
+  <p id="status" class="muted">準備連線 ESPN…</p>
+</section>
+<section class="panel">
+  <h2>賽事篩選</h2>
+  <div class="toolbar" id="filters"><button class="pill active" data-filter="all">全部賽事</button><button class="pill" data-filter="live">進行中</button><button class="pill" data-filter="upcoming">尚未開賽</button><button class="pill" data-filter="done">已結束</button></div>
+  <p class="muted small">點選每場比賽的「分析此戰」，即可執行 5,000 次模擬。</p>
+</section>
+<section><h2>賽程與分析</h2><div id="games"><div class="panel">正在載入賽程…</div></div></section>
+<section class="panel">
+<h2>📌 模型使用說明</h2>
+<p>勝率模擬會優先參考 ESPN 公開排名中的戰績資料；若排名資料無法取得，會以主場優勢與中性基準做示範模擬。大小分估算不是博彩公司盤口，也不是保證結果。</p>
+<p class="muted small">賽季初樣本少，傷兵、輪休、背靠背賽程與臨場變化可能大幅影響比賽。請把結果當作研究參考，而非投注建議。</p>
+</section>
+<p class="footer">資料來源：ESPN 公開賽程與排名資料。此頁為個人分析工具，非 ESPN 官方產品。</p>
+</main>
 <script>
 const $=id=>document.getElementById(id);
-const now=new Date();$('d').value=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-async function load(){ $('s').textContent='正在連線取得賽程…';$('games').innerHTML='';try{const date=$('d').value.replaceAll('-','');const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates='+date);if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();const events=j.events||[];if(!events.length){$('games').innerHTML='<li>這個日期沒有找到比賽，或資料來源沒有回傳賽事。</li>'}events.forEach(e=>{const c=e.competitions?.[0];const teams=c?.competitors||[];const a=teams.find(t=>t.homeAway==='away')||{};const h=teams.find(t=>t.homeAway==='home')||{};const li=document.createElement('li');li.innerHTML='<b>'+safe(a.team?.displayName)+' '+safe(a.score||'—')+' @ '+safe(h.team?.displayName)+' '+safe(h.score||'—')+'</b><br><span class="muted">'+safe(e.status?.type?.shortDetail||'狀態未提供')+'</span>'; $('games').appendChild(li)});$('s').textContent='載入完成：'+events.length+' 場；來源 ESPN 公開賽程。'}catch(e){$('s').textContent='連線失敗：'+e.message+'。可能是網路或資料來源限制，請稍後重試。';$('games').innerHTML='<li>目前無法取得賽程，尚未確認即時資料可用。</li>'}}
-$('go').addEventListener('click',load);load();
-</script></main></body></html>
+let events=[], standings=new Map(), filter='all', timer=null, loading=false;
+const today=new Date();$('date').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const teamName=t=>t?.team?.displayName||t?.team?.name||'未知球隊';
+function stateOf(e){const s=e?.status?.type?.state||e?.competitions?.[0]?.status?.type?.state;return s==='in'?'live':s==='post'?'done':'upcoming'}
+function stateLabel(e){const s=e?.status?.type||e?.competitions?.[0]?.status?.type||{};return s.shortDetail||s.description||({in:'比賽進行中',post:'比賽已結束',pre:'尚未開賽'}[s.state]||'時間未提供')}
+function parseStandings(data){const out=new Map();function walk(node){if(!node||typeof node!=='object')return;if(Array.isArray(node)){node.forEach(walk);return}if(node.team&&Array.isArray(node.stats)){const stats={};node.stats.forEach(x=>{stats[String(x.name||x.abbreviation||'').toLowerCase()]=Number(x.value)});const wins=stats.wins??stats.w;const losses=stats.losses??stats.l;if(Number.isFinite(wins)&&Number.isFinite(losses)){const pct=stats.winpercent??stats.win_pct??(wins+losses?wins/(wins+losses):.5);const diff=stats.pointdifferential??stats.differential??0;out.set(String(node.team.displayName||node.team.name||'').toLowerCase(),{pct:Number.isFinite(pct)?pct:.5,diff:Number.isFinite(diff)?diff:0,wins,losses})}}Object.values(node).forEach(v=>{if(v&&typeof v==='object')walk(v)})}walk(data);return out}
+async function getStandings(){try{const r=await fetch('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings');if(r.ok)standings=parseStandings(await r.json())}catch(e){/* optional data */}}
+function ratingFor(team){const name=String(teamName(team)).toLowerCase();for(const [k,v] of standings){if(name===k||name.includes(k)||k.includes(name))return v}return null}
+function randomNormal(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)}
+function sim(a,h,line){const ra=ratingFor(a),rh=ratingFor(h);const has=!!(ra&&rh);const diff=has?((rh.pct-ra.pct)*18+((rh.diff-ra.diff)*.08)):3.2;const awayBase=114-diff/2,homeBase=114+diff/2;let aw=0,hw=0,over=0,totals=0;for(let i=0;i<5000;i++){const as=Math.max(70,Math.round(awayBase+randomNormal()*12));const hs=Math.max(70,Math.round(homeBase+randomNormal()*12));if(as>hs)aw++;else if(hs>as)hw++;if(as+hs>line)over++;totals+=as+hs}return {aw:aw/50,hw:hw/50,over:over/50,total:totals/5000,has}}
+function analyze(id){const e=events.find(x=>x.id===id);if(!e)return;const c=e.competitions?.[0],teams=c?.competitors||[],a=teams.find(t=>t.homeAway==='away')||teams[0]||{},h=teams.find(t=>t.homeAway==='home')||teams[1]||{};const line=Number(document.getElementById('line-'+id)?.value||225.5);const result=sim(a,h,line);const box=$('result-'+id);if(!box)return;box.classList.remove('hidden');box.innerHTML='<div class="grid"><div class="metric"><span class="muted small">客隊勝率</span><b>'+result.aw.toFixed(1)+'%</b><div class="bar"><span style="width:'+result.aw+'%"></span></div>'+esc(teamName(a))+'</div><div class="metric"><span class="muted small">主隊勝率</span><b>'+result.hw.toFixed(1)+'%</b><div class="bar"><span style="width:'+result.hw+'%"></span></div>'+esc(teamName(h))+'</div><div class="metric"><span class="muted small">模型預估總分</span><b>'+result.total.toFixed(1)+'</b><span class="muted small">非官方盤口</span></div><div class="metric"><span class="muted small">你設定的大小分</span><b>'+(result.over>=50?'大分':'小分')+' '+result.over.toFixed(1)+'%</b><span class="muted small">超過此分數的模擬比例</span></div></div><p class="muted small">'+(result.has?'已找到排名戰績資料，勝率以戰績差距與主場優勢估算。':'排名資料不足，使用中性基準與主場優勢；此場勝率參考價值較低。')+' 模擬次數：5,000。</p>'}
+function render(){const list=events.filter(e=>filter==='all'||stateOf(e)===filter);if(!list.length){$('games').innerHTML='<div class="panel">這個日期沒有符合篩選條件的比賽。</div>';return}$('games').innerHTML=list.map(e=>{const c=e.competitions?.[0],teams=c?.competitors||[],a=teams.find(t=>t.homeAway==='away')||teams[0]||{},h=teams.find(t=>t.homeAway==='home')||teams[1]||{},state=stateOf(e);const score=t=>t.score??'—';const date=e.date?new Date(e.date).toLocaleString('zh-TW',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}):'';return '<article class="game"><div class="gamehead"><div><div class="teams">'+esc(teamName(a))+' @ '+esc(teamName(h))+'</div><div class="score">'+esc(score(a))+' : '+esc(score(h))+'</div><div class="muted small">'+esc(date)+' · '+esc(stateLabel(e))+'</div></div><span class="tag">'+({live:'進行中',done:'已結束',upcoming:'未開賽'}[state])+'</span></div><div class="analysis"><div class="controls"><label class="small">大小分參考線 <input id="line-'+esc(e.id)+'" type="number" min="150" max="300" step="0.5" value="225.5" style="width:105px"></label><button data-analyze="'+esc(e.id)+'">分析此戰</button></div><div id="result-'+esc(e.id)+'" class="hidden"></div></div></article>'}).join('')}
+async function load(){if(loading)return;loading=true;$('load').disabled=true;$('status').textContent='正在取得 ESPN 賽程與排名資料…';try{const date=$('date').value;if(!date)throw Error('請先選擇比賽日期');const compact=date.replaceAll('-','');const r=await fetch('https://site.api.espn.com/apis/site/v2/sports/basketball/nba/scoreboard?dates='+compact);if(!r.ok)throw Error('ESPN 回應 HTTP '+r.status);const data=await r.json();events=data.events||[];await getStandings();render();const live=events.filter(e=>stateOf(e)==='live').length;$('status').textContent='更新成功：'+events.length+' 場賽事'+(live?'，其中 '+live+' 場進行中':'')+'。最後更新 '+new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit',second:'2-digit'});if(!events.length)$('status').textContent+=' 該日期目前沒有賽事資料。'}catch(e){$('status').textContent='載入失敗：'+e.message+'。請確認網路後重試。';$('games').innerHTML='<div class="panel">暫時無法取得資料。稍後點選「載入賽程」再試一次。</div>'}finally{loading=false;$('load').disabled=false}}
+$('load').addEventListener('click',load);$('refresh').addEventListener('click',load);$('date').addEventListener('change',load);
+$('filters').addEventListener('click',e=>{const b=e.target.closest('[data-filter]');if(!b)return;filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
+$('games').addEventListener('click',e=>{const b=e.target.closest('[data-analyze]');if(b)analyze(b.dataset.analyze)});
+$('auto').addEventListener('change',()=>{if(timer)clearInterval(timer);timer=null;if($('auto').checked)timer=setInterval(()=>{if(!$('date').matches(':focus'))load()},60000)});
+if($('auto').checked)timer=setInterval(()=>{if(!$('date').matches(':focus'))load()},60000);
+load();
+</script></body></html>
